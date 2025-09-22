@@ -10,8 +10,14 @@ public class conditions {
         String s1 = "Fresh";
         String s2 = "Soph";
         String s3 = "Jr";
-        System.out.println(s2 + s1);
 
+        //booleans to work with
+        boolean b1 = true;
+        boolean b2 = true;
+        boolean b3 = true;
+
+        if (b1) return;
         if (s1 == "Fresh" && s2 == "Soph") {System.out.println("true");}
+        while (b2) System.out.println("b2 = true");
     }
 }
