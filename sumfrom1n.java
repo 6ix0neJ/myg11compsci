@@ -1,3 +1,8 @@
+/*
+Code by Jibril Richardson
+Github repo: https://github.com/6ix0neJ/myg11compsci
+*/
+
 import java.util.Scanner;
 public class sumfrom1n {
     public static void main (String[] args) {
@@ -17,3 +22,4 @@ public class sumfrom1n {
         sc.close();
     }
 }
+
