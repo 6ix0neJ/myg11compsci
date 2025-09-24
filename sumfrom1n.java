@@ -3,7 +3,7 @@ public class sumfrom1n {
     public static void main (String[] args) {
         Scanner sc = new Scanner(System.in);
         System.out.println("Enter a number more than 1:");
-        int n = sc.nextInt();
+        long n = sc.nextInt();
 
         long j = 0;
         for (long i = 0; i <= n; i++) {
