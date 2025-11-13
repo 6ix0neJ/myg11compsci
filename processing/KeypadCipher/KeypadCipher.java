@@ -1,3 +1,10 @@
+/*
+WIP!
+
+Should be done with all the code soon
+*/
+
+
 import processing.core.PApplet;
 import processing.core.PImage;
 import java.util.Arrays;
@@ -60,7 +67,7 @@ public class KeypadCipher extends PApplet {
             return;
         }
         if (keyCode >= 129 && keyCode <= 137) {
-            keys[keyCode - 129].
+            keys[keyCode - 129].keyPressed();
         }
     }
     public void mousePressed() {
