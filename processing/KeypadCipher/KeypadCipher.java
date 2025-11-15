@@ -12,7 +12,7 @@ public class KeypadCipher extends PApplet {
     final int RED = color(255, 0, 0);
     final int WHITE = color(255, 255, 255);
 
-    PImage keypad, keysprite;
+    PImage keypad, keysprite, redLights;
 
     KeypadButton[] keys = new KeypadButton[9];
     boolean[] currentState = new boolean[9];
@@ -30,6 +30,7 @@ public class KeypadCipher extends PApplet {
     boolean bPuzzleSolved, bInputEnabled, bStarted;
     int timeStamp;
     Timer timer;
+    ProgressBar pBar;
 
     boolean isHovering;
     public static void main (String[] args) {
@@ -39,6 +40,7 @@ public class KeypadCipher extends PApplet {
         size(1024, 768, P2D);
         keypad = loadImage("sprites/keypad_sourceart.png");
         keysprite = loadImage("sprites/keyOn.png");
+        redLights = loadImage("sprites/red_lights.png");
     }
     public void setup () {
         frameRate(30);
@@ -52,13 +54,14 @@ public class KeypadCipher extends PApplet {
         keys[3] = new KeypadButton(this, 4, keysprite, 326,218);   // Mid Left
         keys[4] = new KeypadButton(this, 5, keysprite, 453,218);   // Dead Center
         keys[5] = new KeypadButton(this, 6, keysprite, 578,218);   // Mid Right
-        keys[6] = new KeypadButton(this, 7, keysprite, 326,88);    // Top Left
-        keys[7] = new KeypadButton(this, 8, keysprite, 453,88);    // Top Mid
-        keys[8] = new KeypadButton(this, 9, keysprite, 578,88);    // Top Right
+        keys[6] = new KeypadButton(this, 7, keysprite, 326,89);    // Top Left
+        keys[7] = new KeypadButton(this, 8, keysprite, 453,89);    // Top Mid
+        keys[8] = new KeypadButton(this, 9, keysprite, 578,89);    // Top Right
         randomize();
 
         bInputEnabled = true;
         timer = new Timer(this);
+        pBar = new ProgressBar(this, redLights);
     }
     public void keyPressed() {
         if (!bInputEnabled) {
@@ -81,6 +84,7 @@ public class KeypadCipher extends PApplet {
     }
     public void draw () {
         image (keypad, 0, 0);
+        pBar.draw();
         for (KeypadButton key : keys) {
             key.draw();
         }
@@ -139,6 +143,27 @@ public class KeypadCipher extends PApplet {
     }
 }
 
+class ProgressBar {
+    final int POS_X = 514, POS_Y = 564;
+    int[] WIDTHS = { 338, 304, 266, 212, 152, 98, 42 };
+    int phase, offset;
+    PImage sprite;
+    KeypadCipher p;
+    ProgressBar(KeypadCipher p, PImage sprite) {
+        this.p = p;
+        this.sprite = sprite;
+        update();
+    }
+    void update () {
+        phase = 4;
+        offset = (WIDTHS[0] - WIDTHS[phase]) / 2;
+    }
+    void draw () {
+        p.imageMode(PApplet.CENTER);
+        p.image(sprite, POS_X, POS_Y, WIDTHS[phase], 60, offset, 0, WIDTHS[0] - offset, 60);
+        p.imageMode(PApplet.CORNER);
+    }
+}
 class Timer {
     int secondsLeft = 240;
     int timeStamp;
@@ -179,7 +204,6 @@ class Timer {
 
     }
 }
-
 class KeypadButton {
     float x, y;
     PImage sprite;
@@ -244,14 +268,15 @@ class KeypadButton {
                 break;
 
         }
+        if (Arrays.equals(p.currentState, p.solutionState)) {
+            System.out.println("Puzzle Solved");
+            p.puzzlesSolved(true);
+        }
+        else p.puzzlesSolved(false);
     }
     boolean mouseOverKey() {
         if (p.mouseX > x && p.mouseX < x + 127 && p.mouseY > y && p.mouseY < y + 127) {
-            if (Arrays.equals(p.currentState, p.solutionState)) {
-                System.out.println("Puzzle Solved");
-                p.puzzlesSolved(true);
-            }
-            else p.puzzlesSolved(false);
+            keyPressed();
             return true;
         }
         return false;
