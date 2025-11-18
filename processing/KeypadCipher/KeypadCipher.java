@@ -1,9 +1,8 @@
-//code is nearly done - Jibril
+//Code is nearly done, only a fdw little bugs involving the timer - Jibril
 
 import processing.core.PApplet;
 import processing.core.PImage;
 import processing.sound.SoundFile;
-
 import java.util.Arrays;
 
 public class KeypadCipher extends PApplet {
