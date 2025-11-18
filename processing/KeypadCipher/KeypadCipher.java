@@ -1,10 +1,9 @@
-/*
-WIP!
-Should be done with all the code soon
-*/
+//code is nearly done - Jibril
 
 import processing.core.PApplet;
 import processing.core.PImage;
+import processing.sound.SoundFile;
+
 import java.util.Arrays;
 
 public class KeypadCipher extends PApplet {
@@ -12,8 +11,8 @@ public class KeypadCipher extends PApplet {
     final int RED = color(255, 0, 0);
     final int WHITE = color(255, 255, 255);
 
-    PImage keypad, keysprite, redLights;
-
+    PImage keypad, keysprite, redLights, explosionSprite;
+    SoundFile explosionSfx, keybeep, timertick;
     KeypadButton[] keys = new KeypadButton[9];
     boolean[] currentState = new boolean[9];
     boolean[] solutionState = {
@@ -27,10 +26,11 @@ public class KeypadCipher extends PApplet {
             true,
             true,
     };
-    boolean bPuzzleSolved, bInputEnabled, bStarted;
+    boolean bPuzzleSolved, bInputEnabled, bStarted, bDisarmed;
     int timeStamp;
     Timer timer;
     ProgressBar pBar;
+    Explosion explosion;
 
     boolean isHovering;
     public static void main (String[] args) {
@@ -41,6 +41,8 @@ public class KeypadCipher extends PApplet {
         keypad = loadImage("sprites/keypad_sourceart.png");
         keysprite = loadImage("sprites/keyOn.png");
         redLights = loadImage("sprites/red_lights.png");
+        explosionSprite = loadImage("sprites/explosion.png");
+
     }
     public void setup () {
         frameRate(30);
@@ -84,11 +86,12 @@ public class KeypadCipher extends PApplet {
     }
     public void draw () {
         image (keypad, 0, 0);
-        pBar.draw();
+        if (!bDisarmed) pBar.draw();
         for (KeypadButton key : keys) {
             key.draw();
         }
-         if (bPuzzleSolved) {
+
+        if (bPuzzleSolved) {
             textSize(60);
             textAlign(CENTER, CENTER);
             text("DISARMED", cX, 622);
@@ -100,13 +103,18 @@ public class KeypadCipher extends PApplet {
 
             int now = millis();
             if (now - timeStamp >= 1000) {
-                bInputEnabled = true;
+                if(!bDisarmed) {
+                    bInputEnabled = true;
+                    randomize();
+                }
                 bPuzzleSolved = false;
-                randomize();
             }
-        else{
+        }
+        else {
             timer.draw();
-            }
+        }
+        if (explosion != null) {
+            explosion.draw();
         }
         //if (mouseX > cX && mouseX < cX + 200 && mouseY > cY && mouseY < cY + 100) {
         /*
@@ -128,6 +136,7 @@ public class KeypadCipher extends PApplet {
         if (bPuzzleSolved) {
             bInputEnabled = false;
             timeStamp = millis();
+            pBar.update();
         }
     }
     void randomize () {
@@ -141,8 +150,36 @@ public class KeypadCipher extends PApplet {
         bStarted = true;
         timer.start();
     }
+    void disarm() {
+        bDisarmed = true;
+        bInputEnabled = false;
+        timer.stop();
+    }
+    void explode() {
+        bInputEnabled = false;
+        timer.stop();
+        explosion = new Explosion(this, explosionSprite, cX, cY);
+    }
 }
-
+class Explosion {
+    final float GROWTH = 64;
+    float size = 256;
+    float x, y;
+    PImage sprite;
+    KeypadCipher p;
+    Explosion(KeypadCipher p, PImage sprite, float x, float y) {
+        this.p = p;
+        this.sprite = sprite;
+        x = p.cX;
+        y = p.cY;
+    }
+    void draw () {
+        size += GROWTH;
+        p.imageMode(PApplet.CENTER);
+        p.image(sprite, x, y, size, size);
+        p.imageMode(PApplet.CORNER);
+    }
+}
 class ProgressBar {
     final int POS_X = 514, POS_Y = 564;
     int[] WIDTHS = { 338, 304, 266, 212, 152, 98, 42 };
@@ -152,11 +189,22 @@ class ProgressBar {
     ProgressBar(KeypadCipher p, PImage sprite) {
         this.p = p;
         this.sprite = sprite;
-        update();
+        init();
+    }
+    void init () {
+        phase = 0;
+        offset = 0;
     }
     void update () {
-        phase = 4;
-        offset = (WIDTHS[0] - WIDTHS[phase]) / 2;
+        if (phase < WIDTHS.length - 1) {
+            phase++;
+            offset = (WIDTHS[0] - WIDTHS[phase]) / 2;
+        }
+        else {
+            p.disarm();
+        }
+
+
     }
     void draw () {
         p.imageMode(PApplet.CENTER);
@@ -165,24 +213,32 @@ class ProgressBar {
     }
 }
 class Timer {
-    int secondsLeft = 240;
+    int secondsLeft = 5;
     int timeStamp;
-    int minutes, timeSec;
-    //String timeSec;
-    boolean bRunning;
+    int minutes;
+    String timeSec;
+    boolean bRunning, bDisplay;
     KeypadCipher p;
     Timer(KeypadCipher p) {
         this.p = p;
         setTimeString();
     }
     void start () {
+        bDisplay = true;
         bRunning = true;
         timeStamp = p.millis();
+    }
+    void stop () {
+        bRunning = false;
     }
     void update () {
         int now = p.millis();
         if (now - timeStamp >= 1000) {
             secondsLeft--;
+            if (secondsLeft == 0) {
+
+            }
+            bRunning = false;
             timeStamp += 1000;
             setTimeString();
         }
@@ -190,16 +246,17 @@ class Timer {
     void setTimeString () {
         minutes = secondsLeft / 60;
         int seconds = secondsLeft % 60;
-        String timeSec = String.valueOf(seconds);
-        if (seconds > 10) {
+        timeSec = String.valueOf(seconds);
+        if (seconds < 10) {
             timeSec = "0" + timeSec;
         }
     }
     void draw () {
-        if (bRunning ) return;
-        if (secondsLeft > 0) update();
+        if (!bRunning) return;
+        if (bRunning && secondsLeft > 0) update();
         p.textSize(42);
         p.textAlign(PApplet.CENTER, PApplet.CENTER);
+        //String formattedSeconds = (timeSec < 10) ? "0" + timeSec : String.valueOf(timeSec);
         p.text (minutes + ":" + timeSec, p.cX, 622);
 
     }
