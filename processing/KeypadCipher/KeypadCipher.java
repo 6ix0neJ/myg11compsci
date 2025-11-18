@@ -1,4 +1,4 @@
-//Code is nearly done, only a fdw little bugs involving the timer - Jibril
+//Code is nearly done, only a few little bugs involving the timer - Jibril
 
 import processing.core.PApplet;
 import processing.core.PImage;
@@ -11,7 +11,9 @@ public class KeypadCipher extends PApplet {
     final int WHITE = color(255, 255, 255);
 
     PImage keypad, keysprite, redLights, explosionSprite;
-    SoundFile explosionSfx, keybeep, timertick;
+    SoundFile  keybeep, timertick, Solved, FAH;
+    SoundFile[] explosionSfx = new SoundFile[3];
+
     KeypadButton[] keys = new KeypadButton[9];
     boolean[] currentState = new boolean[9];
     boolean[] solutionState = {
@@ -25,7 +27,7 @@ public class KeypadCipher extends PApplet {
             true,
             true,
     };
-    boolean bPuzzleSolved, bInputEnabled, bStarted, bDisarmed;
+    boolean bPuzzleSolved, bInputEnabled, bStarted, bDisarmed, bGameOver;
     int timeStamp;
     Timer timer;
     ProgressBar pBar;
@@ -41,6 +43,15 @@ public class KeypadCipher extends PApplet {
         keysprite = loadImage("sprites/keyOn.png");
         redLights = loadImage("sprites/red_lights.png");
         explosionSprite = loadImage("sprites/explosion.png");
+
+        explosionSfx[0] = new SoundFile(this, "sounds/explosion.wav");
+        explosionSfx[1] = new SoundFile(this, "sounds/explosion1.wav");
+        explosionSfx[2] = new SoundFile(this, "sounds/explosion2.wav");
+
+        keybeep = new SoundFile(this, "sounds/keybeep.wav");
+        timertick = new SoundFile(this, "sounds/timertick.wav");
+        Solved = new SoundFile(this, "sounds/deactivated.wav");
+        FAH = new SoundFile(this, "sounds/FAH.wav");
 
     }
     public void setup () {
@@ -65,6 +76,14 @@ public class KeypadCipher extends PApplet {
         pBar = new ProgressBar(this, redLights);
     }
     public void keyPressed() {
+        if (bGameOver) {
+            bGameOver = false;
+            bPuzzleSolved = false;
+            bInputEnabled = true;
+            bStarted = false;
+            pBar.init();
+            timer.init();
+        }
         if (!bInputEnabled) {
             return;
         }
@@ -84,6 +103,13 @@ public class KeypadCipher extends PApplet {
 
     }
     public void draw () {
+        if (bGameOver) {
+            background(0);
+            textSize(60);
+            textAlign(CENTER, CENTER);
+            text("GAME OVER", cX, cY);
+            text("Press Any Key to Restart", cX, cY + 60);
+        }
         image (keypad, 0, 0);
         if (!bDisarmed) pBar.draw();
         for (KeypadButton key : keys) {
@@ -131,6 +157,7 @@ public class KeypadCipher extends PApplet {
          */
     }
     void puzzlesSolved (boolean value) {
+        //Solved.play();
         bPuzzleSolved = value;
         if (bPuzzleSolved) {
             bInputEnabled = false;
@@ -157,26 +184,48 @@ public class KeypadCipher extends PApplet {
     void explode() {
         bInputEnabled = false;
         timer.stop();
-        explosion = new Explosion(this, explosionSprite, cX, cY);
+        explosion = new Explosion(this, explosionSprite, explosionSfx);
+    }
+    void gameOver() {
+        bGameOver = true;
+        explosion = null;
     }
 }
 class Explosion {
     final float GROWTH = 64;
     float size = 256;
     float x, y;
+    int alpha = 255;
     PImage sprite;
     KeypadCipher p;
-    Explosion(KeypadCipher p, PImage sprite, float x, float y) {
+    SoundFile[] sfx;
+    Explosion(KeypadCipher p, PImage sprite, SoundFile[] sfx) {
         this.p = p;
         this.sprite = sprite;
         x = p.cX;
         y = p.cY;
+        this.sfx = sfx;
+        explode();
+    }
+    void explode() {
+        int randIndex = (int) p.random(0, 3);
+        sfx[randIndex].play();
+        p.FAH.play();
     }
     void draw () {
-        size += GROWTH;
+        if (size < 5000) size += GROWTH;
+        else {
+            p.background(0);
+            p.tint(255, alpha);
+            if (alpha > 0) alpha --;
+            else {
+                p.gameOver();
+            }
+        }
         p.imageMode(PApplet.CENTER);
         p.image(sprite, x, y, size, size);
         p.imageMode(PApplet.CORNER);
+        p.tint(255, 255);
     }
 }
 class ProgressBar {
@@ -220,6 +269,11 @@ class Timer {
     KeypadCipher p;
     Timer(KeypadCipher p) {
         this.p = p;
+        init();
+    }
+    void init () {
+        bDisplay = false;
+        secondsLeft = 5;
         setTimeString();
     }
     void start () {
@@ -235,9 +289,8 @@ class Timer {
         if (now - timeStamp >= 1000) {
             secondsLeft--;
             if (secondsLeft == 0) {
-
+                p.explode();
             }
-            bRunning = false;
             timeStamp += 1000;
             setTimeString();
         }
@@ -251,7 +304,7 @@ class Timer {
         }
     }
     void draw () {
-        if (!bRunning) return;
+        if (!bDisplay) return;
         if (bRunning && secondsLeft > 0) update();
         p.textSize(42);
         p.textAlign(PApplet.CENTER, PApplet.CENTER);
@@ -279,6 +332,7 @@ class KeypadButton {
         p.currentState[key - 1] = isOn;
     }
     void keyPressed () {
+        p.keybeep.play();
         if (!p.bStarted) {
             p.startTimer();
         }
