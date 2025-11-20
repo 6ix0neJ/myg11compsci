@@ -1,5 +1,3 @@
-//Code is nearly done, only a few little bugs involving the timer - Jibril
-
 import processing.core.PApplet;
 import processing.core.PImage;
 import processing.sound.SoundFile;
@@ -55,7 +53,7 @@ public class KeypadCipher extends PApplet {
 
     }
     public void setup () {
-        frameRate(30);
+        frameRate(60);
         windowTitle("BioForge");
         cX = width / 2;
         cY = height / 2;
@@ -108,7 +106,9 @@ public class KeypadCipher extends PApplet {
             textSize(60);
             textAlign(CENTER, CENTER);
             text("GAME OVER", cX, cY);
+            textSize(30);
             text("Press Any Key to Restart", cX, cY + 60);
+            return;
         }
         image (keypad, 0, 0);
         if (!bDisarmed) pBar.draw();
@@ -120,7 +120,7 @@ public class KeypadCipher extends PApplet {
             textSize(60);
             textAlign(CENTER, CENTER);
             text("DISARMED", cX, 622);
-
+            Solved.play();
             for (KeypadButton k : keys)  {
                 if (k.key != 5)
                     k.switchState();
@@ -217,7 +217,7 @@ class Explosion {
         else {
             p.background(0);
             p.tint(255, alpha);
-            if (alpha > 0) alpha --;
+            if (alpha > 0) alpha -= 5;
             else {
                 p.gameOver();
             }
@@ -251,17 +251,25 @@ class ProgressBar {
         else {
             p.disarm();
         }
-
-
     }
     void draw () {
         p.imageMode(PApplet.CENTER);
         p.image(sprite, POS_X, POS_Y, WIDTHS[phase], 60, offset, 0, WIDTHS[0] - offset, 60);
         p.imageMode(PApplet.CORNER);
+        gameWon();
+    }
+    void gameWon() {
+        if (phase == 7) {
+            p.background(0);
+            p.textSize(70);
+            p.text("CONGRATULATIONS!", p.cX, p.cY);
+            p.text("YOU WON", p.cX, p.cY + 60);
+            p.bGameOver = true;
+        }
     }
 }
 class Timer {
-    int secondsLeft = 5;
+    int secondsLeft = 240;
     int timeStamp;
     int minutes;
     String timeSec;
@@ -273,7 +281,7 @@ class Timer {
     }
     void init () {
         bDisplay = false;
-        secondsLeft = 5;
+        secondsLeft = 240;
         setTimeString();
     }
     void start () {
