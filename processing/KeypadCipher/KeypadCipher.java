@@ -73,14 +73,20 @@ public class KeypadCipher extends PApplet {
         timer = new Timer(this);
         pBar = new ProgressBar(this, redLights);
     }
+    public void init() {
+        bDisarmed = false;
+        bGameOver = false;
+        bPuzzleSolved = false;
+        bInputEnabled = true;
+        bStarted = false;
+        pBar.init();
+        timer.init();
+        randomize();
+    }
     public void keyPressed() {
-        if (bGameOver) {
-            bGameOver = false;
-            bPuzzleSolved = false;
-            bInputEnabled = true;
-            bStarted = false;
-            pBar.init();
-            timer.init();
+        if (bGameOver || bDisarmed) {
+            init();
+            return;
         }
         if (!bInputEnabled) {
             return;
@@ -90,6 +96,10 @@ public class KeypadCipher extends PApplet {
         }
     }
     public void mousePressed() {
+        if (bGameOver || bDisarmed) {
+            init();
+            return;
+        }
         if (!bInputEnabled) {
             return;
         }
@@ -119,7 +129,12 @@ public class KeypadCipher extends PApplet {
         if (bPuzzleSolved) {
             textSize(60);
             textAlign(CENTER, CENTER);
-            text("DISARMED", cX, 622);
+            if (bDisarmed) {
+                text("DISARMED", cX, 622);
+            }
+            else {
+                text("PHASE: " + pBar.phase, cX, 622);
+            }
             Solved.play();
             for (KeypadButton k : keys)  {
                 if (k.key != 5)
